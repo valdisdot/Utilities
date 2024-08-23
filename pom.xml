@@ -10,7 +10,6 @@
     <packaging>pom</packaging>
     <modules>
         <module>Commons</module>
-        <module>Security</module>
         <module>Vaadin</module>
     </modules>
 
