@@ -4,6 +4,8 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Composite;
 import com.valdisdot.util.vaadin.helper.PropertiesRegister;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -28,18 +30,6 @@ public abstract class Container extends Composite<Component> {
      * Default constructor for {@code Container} for inheritance.
      */
     protected Container() {
-    }
-
-    /**
-     * Sets the {@link PropertiesRegister} used for container key management.
-     * This method is used for Spring dependency injection and inheritance (post-construct DI).
-     *
-     * @param propertiesRegister the {@link PropertiesRegister} to set
-     */
-    @Autowired
-    protected void setPropertiesRegister(PropertiesRegister propertiesRegister) {
-        this.propertiesRegister = Objects.requireNonNull(propertiesRegister, "PropertiesRegister is null");
-        this.propertiesRegister.registerComponent(this.getClass());
     }
 
     /**
@@ -76,6 +66,31 @@ public abstract class Container extends Composite<Component> {
     }
 
     /**
+     * Sets the {@link PropertiesRegister} used for container key management.
+     * This method is used for Spring dependency injection and inheritance (post-construct DI).
+     *
+     * @param propertiesRegister the {@link PropertiesRegister} to set
+     */
+    @Autowired
+    protected void setPropertiesRegister(PropertiesRegister propertiesRegister) {
+        this.propertiesRegister = Objects.requireNonNull(propertiesRegister, "PropertiesRegister is null");
+        this.propertiesRegister.registerComponent(this.getClass());
+    }
+
+    /**
+     * Optionally overridden by inheritors to provide a CSS structure for the container.
+     * <p>
+     * This method can be used to return a CSS string that represents the visual styling of the container.
+     * By default, it returns an empty string, which means no specific CSS is applied.
+     * </p>
+     *
+     * @return a {@code String} representing the CSS structure of the container
+     */
+    protected String getCssString() {
+        return "";
+    }
+
+    /**
      * Initializes the content of this container by creating and configuring the {@link Component}.
      * This method is abstract, requiring inheriting classes to provide the implementation.
      *
@@ -83,4 +98,62 @@ public abstract class Container extends Composite<Component> {
      */
     @Override
     protected abstract Component initContent();
+
+    /**
+     * A simple implementation of the {@link Map.Entry} interface representing a key-value pair.
+     * This class is immutable for the key but allows mutable values, enabling its use in various
+     * data structures where a key-value pair is needed.
+     *
+     * @param <V> the type of the value stored in this tuple
+     */
+    public static class Tuple<V> implements Map.Entry<String, V> {
+        private final String key;
+        private V value = null;
+
+        /**
+         * Constructs a {@code Tuple} with the specified key and value.
+         *
+         * @param key   the key of the tuple
+         * @param value the value of the tuple
+         */
+        public Tuple(String key, V value) {
+            this.key = Objects.requireNonNull(key, "Tuple key is null");
+            this.value = Objects.requireNonNull(value, "Tuple value is null");
+        }
+
+        /**
+         * Returns the key corresponding to this entry.
+         *
+         * @return the key of the tuple
+         */
+        @Override
+        public String getKey() {
+            return key;
+        }
+
+        /**
+         * Returns the value corresponding to this entry.
+         *
+         * @return the value of the tuple
+         */
+        @Override
+        public V getValue() {
+            return value;
+        }
+
+        /**
+         * Replaces the value corresponding to this entry with the specified value.
+         *
+         * @param value the new value to be stored in the tuple
+         * @return the previous value associated with the key
+         */
+        @Override
+        public V setValue(V value) {
+            try {
+                return this.value;
+            } finally {
+                this.value = Objects.requireNonNull(value, "Tuple value is null");
+            }
+        }
+    }
 }
