@@ -18,7 +18,7 @@ public class CssStringBuilder implements Comparable<CssStringBuilder> {
     private boolean isDirectChild;
     private final TreeMap<String, String> properties = new TreeMap<>();
     private CssStringBuilder parent;
-    private final TreeSet<CssStringBuilder> children = new TreeSet<>();
+    private final LinkedHashSet<CssStringBuilder> children = new LinkedHashSet<>();
 
     /**
      * Constructs a {@code CssStringBuilder} with the specified element name.
