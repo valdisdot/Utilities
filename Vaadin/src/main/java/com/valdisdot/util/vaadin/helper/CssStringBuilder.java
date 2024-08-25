@@ -5,67 +5,134 @@ import java.util.stream.Stream;
 
 /**
  * A builder class for creating CSS structures programmatically.
- * The {@code CssBuilder} class allows the definition of CSS classes, their properties,
+ * The {@code CssStringBuilder} class allows the definition of CSS classes, their properties,
  * and hierarchical relationships between them.
  *
  * <p>The class provides methods for adding CSS properties, creating child classes,
  * and generating a string representation of the entire CSS structure.</p>
  */
 public class CssStringBuilder implements Comparable<CssStringBuilder> {
-    private String className;
-    private TreeMap<String, String> properties = new TreeMap<>();
+    private final String elementName;
+    private boolean isTag;
+    private boolean isId;
+    private boolean isDirectChild;
+    private final TreeMap<String, String> properties = new TreeMap<>();
     private CssStringBuilder parent;
-    private TreeSet<CssStringBuilder> children = new TreeSet<>();
+    private final TreeSet<CssStringBuilder> children = new TreeSet<>();
 
     /**
-     * Constructs a {@code CssBuilder} with the specified class name.
-     * The class name is sanitized by removing invalid characters.
+     * Constructs a {@code CssStringBuilder} with the specified element name.
+     * The element name is sanitized to ensure it is a valid CSS selector.
      *
-     * @param className the name of the CSS class
+     * @param elementName the name of the CSS element
+     * @throws IllegalArgumentException if the {@code elementName} is null or blank
      */
-    public CssStringBuilder(String className) {
-        this.className = className.replaceAll("(^\\\\d|[^a-zA-Z0-9_-]|^-\\\\d|^-|^-.*-$|(?<=\\\\s)-(?=\\\\s))", "");
+    private CssStringBuilder(String elementName) {
+        if (elementName == null || elementName.isBlank()) throw new IllegalArgumentException("Element name is empty");
+        this.elementName = elementName.replaceAll("(^\\\\d|[^a-zA-Z0-9_-]|^-\\\\d|^-|^-.*-$|(?<=\\\\s)-(?=\\\\s))", "");
+    }
+
+    /**
+     * Creates a {@code CssStringBuilder} for a tag selector.
+     *
+     * @param tagName the name of the tag
+     * @return a new {@code CssStringBuilder} instance for the tag selector
+     */
+    public static CssStringBuilder tagSelector(String tagName) {
+        CssStringBuilder res = new CssStringBuilder(tagName);
+        res.isTag = true;
+        return res;
+    }
+
+    /**
+     * Creates a {@code CssStringBuilder} for an ID selector.
+     *
+     * @param id the ID of the element
+     * @return a new {@code CssStringBuilder} instance for the ID selector
+     */
+    public static CssStringBuilder idSelector(String id) {
+        CssStringBuilder res = new CssStringBuilder(id);
+        res.isId = true;
+        return res;
+    }
+
+    /**
+     * Creates a {@code CssStringBuilder} for a class selector.
+     *
+     * @param className the name of the class
+     * @return a new {@code CssStringBuilder} instance for the class selector
+     */
+    public static CssStringBuilder classSelector(String className) {
+        return new CssStringBuilder(className);
     }
 
     /**
      * Adds a CSS property to this class.
      * The property is added only if both the key and value are non-null and non-blank.
      *
-     * @param key the CSS property name
+     * @param key   the CSS property name
      * @param value the CSS property value
-     * @return this {@code CssBuilder} instance for method chaining
+     * @return this {@code CssStringBuilder} instance for method chaining
      */
-    public CssStringBuilder put(String key, String value) {
-        if (key != null && value != null && !key.isBlank() && !value.isBlank()) properties.put(key, value);
+    public CssStringBuilder put(String key, Object value) {
+        if (key != null && value != null && !key.isBlank() && !value.toString().isBlank()) properties.put(key, value.toString());
         return this;
     }
 
     /**
      * Adds multiple CSS properties to this class from the provided map.
      * Each key-value pair in the map represents a CSS property name and its corresponding value.
-     * The properties are added only if the map is non-null. The property is added only if both the key and value are non-null and non-blank.
+     * The properties are added only if the map is non-null. Each property is added only if both the key and value are non-null and non-blank.
      *
      * @param values a map containing CSS property names and their corresponding values
-     * @return this {@code CssBuilder} instance for method chaining
+     * @return this {@code CssStringBuilder} instance for method chaining
      */
-    public CssStringBuilder put(Map<String, String> values) {
+    public CssStringBuilder put(Map<String, Object> values) {
         if (values != null) values.forEach(this::put);
         return this;
     }
-
 
     /**
      * Creates a child CSS class under the current class.
      * The child class name must be non-null and non-blank.
      *
-     * @param childrenClassName the name of the child CSS class
-     * @return the newly created {@code CssBuilder} instance representing the child class
-     * @throws IllegalArgumentException if the {@code childrenClassName} is null or blank
+     * @param childName the name of the child CSS class
+     * @param isDirectChild whether the child is a direct descendant
+     * @return the newly created {@code CssStringBuilder} instance representing the child class
+     * @throws IllegalArgumentException if the {@code childName} is null or blank
      */
-    public CssStringBuilder conceive(String childrenClassName) {
-        if (childrenClassName == null || childrenClassName.isBlank())
-            throw new IllegalArgumentException("Children class is empty");
-        CssStringBuilder child = new CssStringBuilder(childrenClassName);
+    public CssStringBuilder putClass(String childName, boolean isDirectChild) {
+        return putChild(classSelector(childName), isDirectChild);
+    }
+
+    /**
+     * Creates a child CSS ID under the current class.
+     * The ID name must be non-null and non-blank.
+     *
+     * @param id the ID of the child element
+     * @param isDirectChild whether the child is a direct descendant
+     * @return the newly created {@code CssStringBuilder} instance representing the child ID
+     * @throws IllegalArgumentException if the {@code id} is null or blank
+     */
+    public CssStringBuilder putId(String id, boolean isDirectChild) {
+        return putChild(idSelector(id), isDirectChild);
+    }
+
+    /**
+     * Creates a child CSS tag under the current class.
+     * The tag name must be non-null and non-blank.
+     *
+     * @param tagName the name of the tag
+     * @param isDirectChild whether the child is a direct descendant
+     * @return the newly created {@code CssStringBuilder} instance representing the child tag
+     * @throws IllegalArgumentException if the {@code tagName} is null or blank
+     */
+    public CssStringBuilder putTag(String tagName, boolean isDirectChild) {
+        return putChild(tagSelector(tagName), isDirectChild);
+    }
+
+    private CssStringBuilder putChild(CssStringBuilder child, boolean isDirectChild) {
+        child.isDirectChild = isDirectChild;
         children.add(child);
         child.parent = this;
         return child;
@@ -74,7 +141,7 @@ public class CssStringBuilder implements Comparable<CssStringBuilder> {
     /**
      * Returns the parent CSS class of the current class.
      *
-     * @return the parent {@code CssBuilder} instance
+     * @return the parent {@code CssStringBuilder} instance
      * @throws NullPointerException if the current class is the root and has no parent
      */
     public CssStringBuilder getParent() {
@@ -99,13 +166,21 @@ public class CssStringBuilder implements Comparable<CssStringBuilder> {
     /**
      * Helper method to recursively build the string representation of the CSS structure.
      *
-     * @param current the current {@code CssBuilder} being processed
-     * @param previous a collection of previous {@code CssBuilder} instances in the hierarchy
-     * @param buffer the {@code StringBuilder} used to accumulate the CSS structure
+     * @param current  the current {@code CssStringBuilder} being processed
+     * @param previous a collection of previous {@code CssStringBuilder} instances in the hierarchy
+     * @param buffer   the {@code StringBuilder} used to accumulate the CSS structure
      */
     private void toStringHelper(CssStringBuilder current, Collection<CssStringBuilder> previous, StringBuilder buffer) {
-        previous.stream().flatMap(b -> Stream.of(".", b.className, " ")).forEach(buffer::append);
-        buffer.append(".").append(current.className).append(" {\n");
+        previous.forEach(el -> buffer
+                .append(el.isDirectChild ? "> " : "")
+                .append(el.isId ? "#" : el.isTag ? "" : ".")
+                .append(el.elementName)
+                .append(" "));
+        buffer
+                .append(current.isDirectChild ? "> " : "")
+                .append(current.isId ? "#" : current.isTag ? "" : ".")
+                .append(current.elementName)
+                .append(" {\n");
         current.properties.entrySet().stream().flatMap(e -> Stream.of("\t", e.getKey(), ": ", e.getValue(), ";\n")).forEach(buffer::append);
         buffer.append("}\n");
         if (!current.children.isEmpty()) {
@@ -116,19 +191,19 @@ public class CssStringBuilder implements Comparable<CssStringBuilder> {
     }
 
     /**
-     * Compares this {@code CssBuilder} to another based on the class name.
+     * Compares this {@code CssStringBuilder} to another based on the element name.
      *
-     * @param o the other {@code CssBuilder} to be compared
-     * @return a negative integer, zero, or a positive integer as this object's class name
-     *         is less than, equal to, or greater than the specified object's class name
+     * @param o the other {@code CssStringBuilder} to be compared
+     * @return a negative integer, zero, or a positive integer as this object's element name
+     * is less than, equal to, or greater than the specified object's element name
      */
     @Override
     public int compareTo(CssStringBuilder o) {
-        return this.className.compareTo(o.className);
+        return this.elementName.compareTo(o.elementName);
     }
 
     /**
-     * Checks if this {@code CssBuilder} is equal to another object.
+     * Checks if this {@code CssStringBuilder} is equal to another object.
      *
      * @param o the object to compare with
      * @return {@code true} if this object is equal to the specified object, {@code false} otherwise
@@ -138,16 +213,16 @@ public class CssStringBuilder implements Comparable<CssStringBuilder> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CssStringBuilder that = (CssStringBuilder) o;
-        return Objects.equals(className, that.className);
+        return Objects.equals(elementName, that.elementName);
     }
 
     /**
-     * Returns the hash code for this {@code CssBuilder}.
+     * Returns the hash code for this {@code CssStringBuilder}.
      *
-     * @return the hash code based on the class name
+     * @return the hash code based on the element name
      */
     @Override
     public int hashCode() {
-        return Objects.hashCode(className);
+        return Objects.hashCode(elementName);
     }
 }
