@@ -11,12 +11,15 @@
     <modules>
         <module>Commons</module>
         <module>Vaadin</module>
+        <module>Security</module>
     </modules>
 
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <vaadin.version>24.0.0</vaadin.version>
+        <spring.framework.version>6.0.0</spring.framework.version>
     </properties>
 
     <build>
