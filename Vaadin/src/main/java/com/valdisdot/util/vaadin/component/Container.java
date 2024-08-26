@@ -1,18 +1,17 @@
 package com.valdisdot.util.vaadin.component;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.Composite;
 import com.valdisdot.util.vaadin.helper.PropertiesRegister;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * A Vaadin component that supports container key registration and management.
  * This class provides methods for registering container keys and retrieving key information and forces the user to implement the component initialization logic.
  */
-public abstract class Container extends Composite<Component> {
+public abstract class Container<C extends Component> implements Supplier<C> {
     private PropertiesRegister propertiesRegister;
 
     /**
@@ -96,6 +95,5 @@ public abstract class Container extends Composite<Component> {
      *
      * @return the configured {@link Component} to be used as the content of this container
      */
-    @Override
-    protected abstract Component initContent();
+    public abstract C get();
 }

@@ -81,7 +81,7 @@ public abstract class AccessibleContainer extends Container implements BeforeEnt
      * @throws AccessDeniedException if the user does not have permission to access the component
      * @apiNote If you override this method, ensure that {@code initContent()} is also called; otherwise,
      * the UI for this element will not be initialized with the logic implemented in {@code initContent()}.
-     * @see AccessibleContainer#initContent()
+     * @see AccessibleContainer#get()
      */
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
