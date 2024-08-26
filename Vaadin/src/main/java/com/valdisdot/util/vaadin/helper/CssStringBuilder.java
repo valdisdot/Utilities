@@ -13,6 +13,7 @@ import java.util.stream.Stream;
  */
 public class CssStringBuilder implements Comparable<CssStringBuilder> {
     private final String elementName;
+    private String pseudoClass;
     private boolean isTag;
     private boolean isId;
     private boolean isDirectChild;
@@ -74,7 +75,7 @@ public class CssStringBuilder implements Comparable<CssStringBuilder> {
      * @param value the CSS property value
      * @return this {@code CssStringBuilder} instance for method chaining
      */
-    public CssStringBuilder put(String key, Object value) {
+    public CssStringBuilder putProperties(String key, Object value) {
         if (key != null && value != null && !key.isBlank() && !value.toString().isBlank()) properties.put(key, value.toString());
         return this;
     }
@@ -87,8 +88,23 @@ public class CssStringBuilder implements Comparable<CssStringBuilder> {
      * @param values a map containing CSS property names and their corresponding values
      * @return this {@code CssStringBuilder} instance for method chaining
      */
-    public CssStringBuilder put(Map<String, Object> values) {
-        if (values != null) values.forEach(this::put);
+    public CssStringBuilder putProperties(Map<String, Object> values) {
+        if (values != null) values.forEach(this::putProperties);
+        return this;
+    }
+
+    /**
+     * Sets a pseudo-class for this CSS selector.
+     * <p>
+     * The pseudo-class is added to the current selector only if the provided value is non-null and non-blank.
+     * If the input is null or blank, the existing pseudo-class value remains unchanged.
+     * </p>
+     *
+     * @param pseudoClass the pseudo-class to be added to this CSS selector. If null or blank, the current pseudo-class remains unchanged.
+     * @return this {@code CssStringBuilder} instance for method chaining.
+     */
+    public CssStringBuilder setPseudoClass(String pseudoClass) {
+        this.pseudoClass = pseudoClass == null || pseudoClass.isBlank() ? this.pseudoClass : pseudoClass;
         return this;
     }
 
@@ -175,11 +191,13 @@ public class CssStringBuilder implements Comparable<CssStringBuilder> {
                 .append(el.isDirectChild ? "> " : "")
                 .append(el.isId ? "#" : el.isTag ? "" : ".")
                 .append(el.elementName)
+                .append(el.pseudoClass == null ? "" : ":" + el.pseudoClass)
                 .append(" "));
         buffer
                 .append(current.isDirectChild ? "> " : "")
                 .append(current.isId ? "#" : current.isTag ? "" : ".")
                 .append(current.elementName)
+                .append(current.pseudoClass == null ? "" : ":" + current.pseudoClass)
                 .append(" {\n");
         current.properties.entrySet().stream().flatMap(e -> Stream.of("\t", e.getKey(), ": ", e.getValue(), ";\n")).forEach(buffer::append);
         buffer.append("}\n");
